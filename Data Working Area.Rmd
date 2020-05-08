@@ -1,0 +1,65 @@
+---
+title: "Hockey Season 1718"
+author: "Alex Tin"
+date: "5/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Load all the necessary files
+```{r}
+
+nhlreg = read.csv("./data/NHL Regular Total.csv",header = TRUE, stringsAsFactors = FALSE)
+
+str(nhlreg)
+
+
+```
+
+
+
+```{r}
+# Regular season table ready for use
+nhlreg2 <- nhlreg[,0:204]
+
+```
+
+
+
+Table to be included in Regular Season tab
+```{r}
+
+regtbl = nhlreg2 %>% select(
+    .,
+    'DftYr',
+    'Age',
+    'Seasons',
+    'H.Ref.Name',
+    'Team',
+    'GP',
+    'G',
+    'A',
+    'CPP',
+    'CriG',
+    'CruG',
+    'CruA1',
+    'CruA2'
+)
+
+
+regtbl$Team <- as.character(regtbl$Team)
+
+str(regtbl)
+
+regtbl %>% mutate(., Team = lapply(regtbl$Team, function(x) strsplit(x,','),`[`,2]))
+
+
+```
+
+
+
+
