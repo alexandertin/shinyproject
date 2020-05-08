@@ -9,36 +9,52 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-Load all the necessary files
 ```{r}
+setwd("~/Desktop/shinyproject/hockey1718")
+```
 
-nhlreg = read.csv("./data/NHL Regular Total.csv",header = TRUE, stringsAsFactors = FALSE)
-
-str(nhlreg)
+Libraries
+```{r}
+library(tidyverse)
+library(tibble)
+library(plotly)
 
 
 ```
 
-
-
+Load all the necessary files (4 total)
 ```{r}
-# Regular season table ready for use
-nhlreg2 <- nhlreg[,0:204]
 
+
+#data for advanced stats for players in regular season
+playerreg <- read_csv(file ="./data/NHLRegular_Total.csv")
+playerreg <- playerreg[,0:204]
+
+#data for team stats in regular season
+teamreg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
+
+#data for player stats in playoffs (basic) - convert to team stats
+teamplayoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
+
+#data for player stats in playoffs (advanced) - convert to team stats
+teamplayoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
+
+str(teamreg)
 ```
 
 
+Regular Season Tab
 
-Table to be included in Regular Season tab
+Regular Season Player Table 
 ```{r}
 
-regtbl = nhlreg2 %>% select(
+# selecting the stats to compare
+playertbl = playerreg %>% select(
     .,
     'DftYr',
     'Age',
     'Seasons',
-    'H.Ref.Name',
+    'H-Ref Name',
     'Team',
     'GP',
     'G',
@@ -47,18 +63,72 @@ regtbl = nhlreg2 %>% select(
     'CriG',
     'CruG',
     'CruA1',
-    'CruA2'
+    'CruA2',
+    'MGL'
 )
 
+# Teams for each division
+Atlantic = c('BOS','TBL','TOR','FLA','MTL','BUF','OTT','DET')
+Metro = c('WSH','PHI','PIT','CAR','CBJ','NYI','NYR','NJD')
+Central = c('STL','COL','DAL','WPG','NSH','MIN','CHI')
+Pacific = c('VEG','EDM','CGY','VAN','ARI','ANA','LAK','SJS')
 
-regtbl$Team <- as.character(regtbl$Team)
+#Adding Divisions to player stats
+playertbl <- playertbl %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
 
-str(regtbl)
+```
 
-regtbl %>% mutate(., Team = lapply(regtbl$Team, function(x) strsplit(x,','),`[`,2]))
+
+Regular Season Team Comparision table
+```{r}
+#Player statistic comparison
+
+#adding Divisions to team 
+teamregtbl <- teamreg %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
+
+teamregtbl
 
 
 ```
+
+
+Playoff Tab
+
+Playoff stats
+```{r}
+###Manipulate colnames of stats
+
+#add identifier as playoff stats ('playoff_'), and convert to lowercase
+colnames(teamplayoff) <- paste0('playoff_',tolower(colnames(teamplayoff)))
+
+#add identifier as playoff stats ('playoff_'), and convert to lowercase
+colnames(teamplayoffadv) <- paste0('playoff_',tolower(colnames(teamplayoffadv)))
+
+#remove duplicate column except for identifier to merge with teamplay
+teamplayoffadvfin <- subset(teamplayoffadv,select=-c(playoff_rk,playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
+
+#merge teamplayoffs
+# playofftotal <- 
+
+left_join(teamplayoff,teamplayadvfin)
+
+
+# Team statistics
+teamstat <- regtbl %>% group_by(., Division, Team) %>% summarise(., agg_goals = sum(G), agg_clean = sum(CPP))
+
+teamstat
+teamstat %>% ggplot(aes(x=agg_goals,y=agg_clean,label=Team)) + geom_point(aes(color=Division))
+
+
+meangoals = mean(regtbl$agggoals)
+
+teamstat %>% mutate(., difftoavg= lapply(agggoals, function(x) x-meangoals))
+
+
+
+#Provided by <a href="https://www.sports-reference.com/sharing.html?utm_source=direct&utm_medium=Share&utm_campaign=ShareTool">Hockey-Reference.com</a>: <a href="https://www.hockey-reference.com/leagues/NHL_2018.html?sr&utm_source=direct&utm_medium=Share&utm_campaign=ShareTool#stats_adv">View Original Table</a><br>Generated 5/8/2020.
+```
+
 
 
 
