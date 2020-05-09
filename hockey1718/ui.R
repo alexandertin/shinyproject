@@ -1,24 +1,12 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
-library(shiny)
-library(shinydashboard)
-library(ggplot2)
-library(dplyr)
-
 
 
 # Shiny Layout
 shinyUI(
     
-    dashboardPage(
-        dashboardHeader(title = 'NHL 2017-18 Season Analysis',
+    dashboardPagePlus(
+        header = dashboardHeaderPlus(
+            enable_rightsidebar = TRUE,
+            title = 'NHL 2017-18 Season Analysis',
                         titleWidth = 350
         ), #end dashboardHeader
         
@@ -54,8 +42,8 @@ shinyUI(
             )
             
         ), #end dashboardSidebar
-    
-        dashboardBody(
+        
+        body = dashboardBody(
             tabItems(
             
             #Tab 1: Intro
@@ -67,9 +55,18 @@ shinyUI(
             tabItem(
                 tabName = 'regular',
                 fluidRow(
+                    column(4, 
+                           selectInput(inputId = "teamstat",
+                                       label = h4("Stat Category"),
+                                       choices = vars,
+                                       selected = 'CF%'))
+                    ),
+                fluidRow(
                     tabBox(
                         title = "Regular Season Stats",
                         width = 12,
+                        
+                        tabPanel(title='Team Comparisons',plotlyOutput('avgseasonstat')),
                         
                         tabPanel(title = "Player Comparisons",
                                  "Team selection"),
@@ -84,7 +81,12 @@ shinyUI(
             
             # Tab 3: Playoff Stats
         tabItem(tabName = 'playoff',
-                fluidRow('to be replaced with playoff stats')), #end tab3 items
+                fluidRow(
+                   
+                     
+                )
+                
+                ), #end tab3 items
             
             # Tab 4: Create your own team
         tabItem(

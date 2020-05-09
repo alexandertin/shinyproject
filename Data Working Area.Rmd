@@ -15,10 +15,16 @@ setwd("~/Desktop/shinyproject/hockey1718")
 
 Libraries
 ```{r}
-library(tidyverse)
-library(tibble)
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(dplyr)
+library(data.table)
 library(plotly)
-
+library(data.table)
+library(DT)
+library(tidyverse)
+library(corrplot)
 
 ```
 
@@ -39,7 +45,9 @@ teamplayoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
 #data for player stats in playoffs (advanced) - convert to team stats
 teamplayoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
 
-str(teamreg)
+
+team2010_2019 <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
+
 ```
 
 
@@ -79,7 +87,7 @@ playertbl <- playertbl %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlan
 ```
 
 
-Regular Season Team Comparision table
+Regular Season Team Comparison table
 ```{r}
 #Player statistic comparison
 
@@ -105,29 +113,81 @@ colnames(teamplayoff) <- paste0('playoff_',tolower(colnames(teamplayoff)))
 colnames(teamplayoffadv) <- paste0('playoff_',tolower(colnames(teamplayoffadv)))
 
 #remove duplicate column except for identifier to merge with teamplay
-teamplayoffadvfin <- subset(teamplayoffadv,select=-c(playoff_rk,playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
+teamplayoffadvfin <- subset(teamplayoffadv,select=-c(playoff_rk,playoff_x3, playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
 
 #merge teamplayoffs
-# playofftotal <- 
+playofftotal <- bind_cols(teamplayoff, teamplayoffadvfin)
 
-left_join(teamplayoff,teamplayadvfin)
+#add divisions
+playofftotal <- playofftotal %>% mutate(., division = ifelse(playoff_tm %in% Atlantic,'Atlantic', ifelse(playoff_tm %in% Metro, 'Metropolitan', ifelse(playoff_tm %in% Central, 'Central','Pacific'))))
+
+
 
 
 # Team statistics
-teamstat <- regtbl %>% group_by(., Division, Team) %>% summarise(., agg_goals = sum(G), agg_clean = sum(CPP))
-
-teamstat
-teamstat %>% ggplot(aes(x=agg_goals,y=agg_clean,label=Team)) + geom_point(aes(color=Division))
-
-
-meangoals = mean(regtbl$agggoals)
-
-teamstat %>% mutate(., difftoavg= lapply(agggoals, function(x) x-meangoals))
-
+# teamstat <- regtbl %>% group_by(., Division, Team) %>% summarise(., agg_goals = sum(G), agg_clean = sum(CPP))
+# 
+# teamstat
+# teamstat %>% ggplot(aes(x=agg_goals,y=agg_clean,label=Team)) + geom_point(aes(color=Division))
+# 
+# 
+# meangoals = mean(regtbl$agggoals)
+# 
+# teamstat %>% mutate(., difftoavg= lapply(agggoals, function(x) x-meangoals))
+# 
 
 
 #Provided by <a href="https://www.sports-reference.com/sharing.html?utm_source=direct&utm_medium=Share&utm_campaign=ShareTool">Hockey-Reference.com</a>: <a href="https://www.hockey-reference.com/leagues/NHL_2018.html?sr&utm_source=direct&utm_medium=Share&utm_campaign=ShareTool#stats_adv">View Original Table</a><br>Generated 5/8/2020.
 ```
+
+
+Team Stats
+
+```{r}
+
+# Group by season
+
+
+# Plotting champions of each year
+champs1019 <- team2010_2019[team2010_2019$`Eventual Champion` ==1,]
+
+
+# Avg Team stat
+avgseasonstat = team2010_2019 %>% group_by(., Season) %>% summarise_all(., mean)
+
+avgseasonstat = subset(avgseasonstat, select = -c(Tm, `Eventual Champion`))
+
+avgseasonstat
+
+
+
+ggplot(avgseasonstat, aes(x=Season, ))
+
+```
+
+
+Correlation matrix
+
+```{r}
+
+corrseasonstat <- subset(avgseasonstat, select = -c(Season, Rk))
+corrseasonstat/82
+corrseasontable = cor(corrseasonstat)
+
+```
+
+
+Corrplot
+
+```{r}
+
+corrplot(corrseasontable)
+
+
+```
+
+
+
 
 
 

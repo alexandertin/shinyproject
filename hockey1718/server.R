@@ -1,21 +1,23 @@
 
-library(shiny)
-library(data.table)
-library(shinydashboard)
-library(dplyr)
-library(ggplot2)
-library(DT)
-
 
 
 
 # Shiny function
-shinyServer(function(input, output) {
-
+shinyServer(function(input, output,session) {
+    observe({
+        
+        
+    })
         
         
 #Tab 2: Regular Season Stats
-        output$regtable <- DT::renderDataTable({
+     output$avgseason_stat <- renderPlotly({
+         plot_ly(avgseasonstat, x = ~Season, y = ~, type = 'scatter', mode = 'lines') %>% 
+             layout(xaxis = list(title = "Season"), yaxis = list(title))
+
+     })
+    
+    output$regtable <- DT::renderDataTable({
             DT::datatable(regtbl,options=list(scrollX=TRUE))
             })
         
