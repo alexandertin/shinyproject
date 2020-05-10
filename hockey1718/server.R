@@ -3,18 +3,23 @@
 
 
 # Shiny function
-shinyServer(function(input, output,session) {
-    observe({
-        
-        
-    })
+shinyServer(function(input, output, session) {
+    
+        updateSelectizeInput(session = session, inputId = 'teamstat',
+                             )
+    
+    
+        season_stat <- reactive({
+            season_stat = team2010_2019 %>% 
+                filter(., Season == input$seasonselect)
+        })
         
         
 #Tab 2: Regular Season Stats
-     output$avgseason_stat <- renderPlotly({
-         plot_ly(avgseasonstat, x = ~Season, y = ~, type = 'scatter', mode = 'lines') %>% 
-             layout(xaxis = list(title = "Season"), yaxis = list(title))
-
+     output$season_graph <- renderPlotly({
+         selstat <- season_stat %>% select(get(input$teamstat))
+         plot_ly(selstat(), x=~hello, y=~goodbye)
+        
      })
     
     output$regtable <- DT::renderDataTable({

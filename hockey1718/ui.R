@@ -2,7 +2,6 @@
 
 # Shiny Layout
 shinyUI(
-    
     dashboardPagePlus(
         header = dashboardHeaderPlus(
             enable_rightsidebar = TRUE,
@@ -54,26 +53,38 @@ shinyUI(
             # Tab 2: Regular Season Stats
             tabItem(
                 tabName = 'regular',
+                fluidRow( h2('Regular Season Stats')),
                 fluidRow(
-                    column(4, 
-                           selectInput(inputId = "teamstat",
-                                       label = h4("Stat Category"),
-                                       choices = vars,
-                                       selected = 'CF%'))
-                    ),
-                fluidRow(
+                         tabPanel(title = 'Team Comparisons',
+                                  column(
+                                      6,
+                                      selectInput(
+                                          inputId = "seasonselect",
+                                          label = h4("Season"),
+                                          choices = unique(avgseasonstat$Season),
+                                          selected = '2018-19'
+                                      )
+                                  ),
+                                  column(
+                                      6,
+                                      selectInput(
+                                          inputId = "teamstat",
+                                          label = h4("Stat Category"),
+                                          choices = vars,
+                                          selected = 'CF%'
+                                      )
+                                  ))), 
+                fluidRow(             
                     tabBox(
-                        title = "Regular Season Stats",
-                        width = 12,
+                        tabPanel(plotlyOutput('season_graph'))
                         
-                        tabPanel(title='Team Comparisons',plotlyOutput('avgseasonstat')),
+                        # tabPanel(title = "Player Comparisons",
+                        #          "Team selection"),
                         
-                        tabPanel(title = "Player Comparisons",
-                                 "Team selection"),
-                        # selectInput("Division", )
-                        tabPanel("Player Table", DT::dataTableOutput("regtable"))
+                        
+                        # # selectInput("Division", )
+                        # tabPanel("Player Table", DT::dataTableOutput("regtable"))
                     )
-            
                 ) #end of fluidRow of dataTable
                 
                 ), #end tab2 tabItem
@@ -106,5 +117,5 @@ shinyUI(
             )
         ) #end dashboardBody
     
-    ) #end dashboardPage    
+    ) #end dashboardPage
 )#end of shinyUI

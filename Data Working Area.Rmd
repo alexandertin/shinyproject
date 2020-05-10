@@ -7,11 +7,9 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "~/Desktop/shinyproject/hockey1718")
 ```
 
-```{r}
-setwd("~/Desktop/shinyproject/hockey1718")
-```
 
 Libraries
 ```{r}
@@ -31,24 +29,140 @@ library(corrplot)
 Load all the necessary files (4 total)
 ```{r}
 
-
-#data for advanced stats for players in regular season
-playerreg <- read_csv(file ="./data/NHLRegular_Total.csv")
-playerreg <- playerreg[,0:204]
-
 #data for team stats in regular season
-teamreg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
+team2018reg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
 
 #data for player stats in playoffs (basic) - convert to team stats
-teamplayoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
+team2018playoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
 
 #data for player stats in playoffs (advanced) - convert to team stats
-teamplayoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
+team2018playoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
+
+# Historical team data - from hockey-reference
+#https://www.hockey-reference.com/play-index/tpbp_finder.cgi
+teamhistreg <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
+teamhistreg$`Eventual Champion` <- as.factor(teamhistreg$`Eventual Champion`)
+
+str(teamhistreg)
+```
+
+Global
+
+```{r}
+# Teams for each division
+Atlantic = c('BOS','TBL','TOR','FLA','MTL','BUF','OTT','DET')
+Metro = c('WSH','PHI','PIT','CAR','CBJ','NYI','NYR','NJD')
+Central = c('STL','COL','DAL','WPG','NSH','MIN','CHI')
+Pacific = c('VEG','EDM','CGY','VAN','ARI','ANA','LAK','SJS')
 
 
-team2010_2019 <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
+fifty = 50
+
+#Add divisions for all datasets
+teamhistreg <- teamhistreg %>% mutate(., Division = ifelse(Tm %in% Atlantic,'Atlantic', ifelse(Tm %in% Metro, 'Metropolitan', ifelse(Tm %in% Central, 'Central','Pacific'))))
+
+
 
 ```
+
+2010 - 2019 Team Stats (Tables)
+
+```{r}
+# Plotting champions of each year
+champs_byseason <- teamhistreg[teamhistreg$`Eventual Champion` ==1,]
+
+
+#By Season
+histreg_byseason = teamhistreg %>% group_by(., Season)
+
+#Average historical value
+avgstat_byseason = teamhistreg %>% group_by(., Season) %>% summarise_all(., mean)
+
+#Average of each stat (without 2012-13 season)
+avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(., mean)
+
+
+#By Team
+histreg_byteam = teamhistreg %>% group_by(., Tm)
+
+
+
+
+# Graph 3: Breakdown Per season, all teams
+reg_byseason = teamhistreg %>% filter(., Season == '2010-11')
+
+
+
+# Avg Team stat
+
+
+
+```
+
+2010 - 2019 Regular Season Team Stats (Graphs) (to be modified by reactive)
+
+
+```{r}
+
+#By Season
+
+ggplot(histreg_byseason, aes(x=Season, y=`CF%`)) + geom_boxplot(aes(color=MadePlayoffs))
+
+
+
+
+
+
+# Graph X: Breakdown Per season, all teams (violin plot)
+teamhistreg %>% ggplot(., aes(x=Season, y=`HIT`)) + geom_violin(aes(fill=MadePlayoffs))
+
+#Graph 2: Stat metric  vs. entire league per season (compared with historical average(?))
+league_average <- avgstat_total %>% select(., `CF%`)
+
+histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=Tm, y=`oiSH%`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + geom_text(aes(label=Tm),nudge_y = 0.5,size=2)
+
+
+#Ex 2:
+league_average2 <- avgstat_total %>% select(., `PDO`)
+
+histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=Tm, y=`PDO`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + geom_hline(yintercept= as.integer(league_average2)) + theme(axis.text.x = element_text(angle = 90))
+
+#Graph 3: Regular season stat metric for playoff teams (by season)
+
+histreg_byteam %>% filter(., Season == '2010-11' & MadePlayoffs==TRUE) %>% ggplot(., aes(x=Tm, y=`oiSH%`)) + geom_point(aes(color=factor(`Eventual Champion`))) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + scale_color_discrete(name="Results", breaks=c('1','2','0'), labels=c('Champion','Runner-up','Eliminated'))
+
+#All playoff teams over the years
+histreg_byteam %>% filter(., MadePlayoffs==TRUE) %>% ggplot(., aes(x=Tm, y=`CF%`)) + geom_point(aes(color=factor(`Eventual Champion`))) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + scale_color_discrete(name="Results", breaks=c('1','2','0'), labels=c('Champion','Runner-up','Eliminated'))
+
+
+
+#Graph 4: oiSH% by CF% graph (default), selectinput to put in 
+histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`dZS%`, y=`CF`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + theme(axis.text.x = element_text(angle = 90))
+
+## Need to compare to playoffs!!
+
+#Graph 5: The importance of faceoffs (apparently not really) - only change season variable
+histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`FO%`, y=`CF%`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + theme(axis.text.x = element_text(angle = 90)) + geom_vline(xintercept=fifty) + geom_hline(yintercept=fifty) + geom_text(aes(label=Tm),nudge_x = 0.4,size=2) 
+# +
+#     annotate('text', x=53, y = 55,label='High wins, high output') +
+#     annotate('text', x=53, y = 44,label='High wins, low output') +
+#     annotate('text', x=47, y = 55,label='Low wins, high output') +
+#     annotate('text', x=47, y = 44,label='Low wins, low output')
+#Takeaway - it doesn't seem to matter too much whether you win FaceOffs
+
+
+    
+    
+#Graph 6: Importance of goalies
+    
+histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`oiSV%`, y=`dZS%`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + theme(axis.text.x = element_text(angle = 90)) + geom_text(aes(label=Tm),nudge_y = 0.5,size=2) + geom_hline(yintercept = 50)
+
+
+
+# Takeaway - increased shot percentage 
+
+```
+
 
 
 Regular Season Tab
@@ -75,11 +189,6 @@ playertbl = playerreg %>% select(
     'MGL'
 )
 
-# Teams for each division
-Atlantic = c('BOS','TBL','TOR','FLA','MTL','BUF','OTT','DET')
-Metro = c('WSH','PHI','PIT','CAR','CBJ','NYI','NYR','NJD')
-Central = c('STL','COL','DAL','WPG','NSH','MIN','CHI')
-Pacific = c('VEG','EDM','CGY','VAN','ARI','ANA','LAK','SJS')
 
 #Adding Divisions to player stats
 playertbl <- playertbl %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
@@ -94,7 +203,6 @@ Regular Season Team Comparison table
 #adding Divisions to team 
 teamregtbl <- teamreg %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
 
-teamregtbl
 
 
 ```
@@ -141,34 +249,73 @@ playofftotal <- playofftotal %>% mutate(., division = ifelse(playoff_tm %in% Atl
 ```
 
 
-Team Stats
+Glossary
 
-```{r}
+Rk -- Rank
+Corsi (EV)
+CF -- Corsi For at Even Strength
+Shots + Blocks + Misses
+CA -- Corsi Against at Even Strength
+Shots + Blocks + Misses
+CF% -- Corsi For % at Even Strength
+CF / (CF + CA)
+Above 50% means the team was controlling the
+puck more often than not with this player on the
+ice in this situation.
+Fenwick (EV)
+FF -- Fenwick For at Even Strength
+Shots + Misses
+FA -- Fenwick Against at Even Strength
+Shots + Misses
+FF% -- Fenwick For % at Even Strength
+FF / (FF + FA)
+Above 50% means the team was controlling the
+puck more often than not with this player on the
+ice in this situation.
+PDO (EV)
+oiSH% -- Team On-Ice Shooting Percentage at Even Strength
+Shooting % while this player/team was on the ice
+oiSV% -- Team On-Ice Save Percentage at Even Strength
+Save % while this player/team was on the ice
+PDO -- PDO at Even Strength
+Shooting % + Save %
+Zone Starts (EV)
+oZS% -- Offensive Zone Start % at Even Strength
+Offensive Zone Faceoffs / (Offensive Zone Faceoffs + Defensive Zone Faceoffs),
+that took place while on the ice
+dZS% -- Defensive Zone Start % at Even Strength
+Defensive Zone Faceoffs / (Offensive Zone Faceoffs + Defensive Zone Faceoffs),
+that took place while on the ice
+Faceoff Wins
+FOW -- Faceoff Wins at Even Strength
+Faceoff Losses
+FOL -- Faceoff Losses at Even Strength
+FO% -- Faceoff Win Percentage at Even Strength
+HIT -- Hits at Even Strength
+Blocks
+BLK -- Blocks at Even Strength
 
-# Group by season
 
-
-# Plotting champions of each year
-champs1019 <- team2010_2019[team2010_2019$`Eventual Champion` ==1,]
-
-
-# Avg Team stat
-avgseasonstat = team2010_2019 %>% group_by(., Season) %>% summarise_all(., mean)
-
-avgseasonstat = subset(avgseasonstat, select = -c(Tm, `Eventual Champion`))
-
-avgseasonstat
+For use in explaining the advanced stats:
+https://www.sports-reference.com/blog/2016/10/what-the-heck-is-corsi-a-primer-on-advanced-hockey-statistics/
 
 
 
-ggplot(avgseasonstat, aes(x=Season, ))
 
-```
+
+
+
+
 
 
 Correlation matrix
 
 ```{r}
+
+avgseasonstat = subset(avgseasonstat, select = -c(Tm, `Eventual Champion`))
+
+avgseasonstat
+
 
 corrseasonstat <- subset(avgseasonstat, select = -c(Season, Rk))
 corrseasonstat/82

@@ -2,9 +2,11 @@
 
 library(shiny)
 library(shinydashboard)
+library(shinydashboardPlus)
 library(ggplot2)
 library(dplyr)
 library(data.table)
+library(tidyverse)
 library(plotly)
 library(data.table)
 library(DT)
@@ -37,7 +39,7 @@ team2010_2019 <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
 
 
 ################ Regular season table
-regtbl = nhlreg %>% select(
+regtbl = playerreg %>% select(
   .,
   'DftYr',
   'Age',
