@@ -18,21 +18,33 @@ library(DT)
 
 ################ Load datasets
 
-#data for advanced stats for players in regular season
-playerreg <- read_csv(file ="./data/NHLRegular_Total.csv")
-playerreg <- playerreg[,0:204]
 
 #data for team stats in regular season
-teamreg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
+team2018reg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
 
 #data for player stats in playoffs (basic) - convert to team stats
-teamplayoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
+team2018playoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
 
 #data for player stats in playoffs (advanced) - convert to team stats
-teamplayoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
+team2018playoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
 
-# team aggregate stats for seasons 2010-2019
-team2010_2019 <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
+# Historical team data - from hockey-reference
+#https://www.hockey-reference.com/play-index/tpbp_finder.cgi
+teamhistreg <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
+teamhistreg$`Eventual Champion` <- as.factor(teamhistreg$`Eventual Champion`)
+
+
+# Teams for each division
+Atlantic = c('BOS','TBL','TOR','FLA','MTL','BUF','OTT','DET')
+Metro = c('WSH','PHI','PIT','CAR','CBJ','NYI','NYR','NJD')
+Central = c('STL','COL','DAL','WPG','NSH','MIN','CHI')
+Pacific = c('VEG','EDM','CGY','VAN','ARI','ANA','LAK','SJS')
+
+
+fifty = 50
+
+#Add divisions for all datasets
+teamhistreg <- teamhistreg %>% mutate(., Division = ifelse(Tm %in% Atlantic,'Atlantic', ifelse(Tm %in% Metro, 'Metropolitan', ifelse(Tm %in% Central, 'Central','Pacific'))))
 
 
 
@@ -62,60 +74,22 @@ Metro = c('WSH','PHI','PIT','CAR','CBJ','NYI','NYR','NJD')
 Central = c('STL','COL','DAL','WPG','NSH','MIN','CHI')
 Pacific = c('VEG','EDM','CGY','VAN','ARI','ANA','LAK','SJS')
 
-#Adding Divisions to player stats
-playertbl <- playertbl %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
-
-# Regular Season Team Comparison table
-
-#adding Divisions to team 
-teamregtbl <- teamreg %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
-
-teamregtbl
 
 
 
-#####################Playoff stats
-
-##Manipulate colnames of stats
-
-#add identifier as playoff stats ('playoff_'), and convert to lowercase
-colnames(teamplayoff) <- paste0('playoff_',tolower(colnames(teamplayoff)))
-
-#add identifier as playoff stats ('playoff_'), and convert to lowercase
-colnames(teamplayoffadv) <- paste0('playoff_',tolower(colnames(teamplayoffadv)))
-
-#remove duplicate column except for identifier to merge with teamplay
-teamplayoffadvfin <- subset(teamplayoffadv,select=-c(playoff_rk,playoff_x3, playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
-
-#merge teamplayoffs
-playofftotal <- bind_cols(teamplayoff, teamplayoffadvfin)
-
-#add divisions
-playofftotal <- playofftotal %>% mutate(., division = ifelse(playoff_tm %in% Atlantic,'Atlantic', ifelse(playoff_tm %in% Metro, 'Metropolitan', ifelse(playoff_tm %in% Central, 'Central','Pacific'))))
 
 
 
-################# Team Stats
-
-
-# Plotting champions of each year
-
-champs1019 <- team2010_2019[team2010_2019$`Eventual Champion` ==1,]
-
-# Overall average of metrics
-
-avgseasonstat = team2010_2019 %>% group_by(., Season) %>% summarise_all(., mean)
-
-avgseasonstat = subset(avgseasonstat, select = -c(Tm, `Eventual Champion`))
-
-
-
-####
+######## Choices to select
 
 vars <- c(
- 'Corsi For' = 'CF',
- 'Corsi Against' = 'CA',
+ 'Total shots taken (CF)' = 'CF',
+ 'Total shots faced (CA)' = 'CA',
  'Corsi For %' = 'CF%',
+ 'Shots fired towards net (FF)' = 'FF',
+ 'Goals Percentage' = 'oiSH%',
+ 'Face-off Wins (FO%)' = 'FO%',
+ 'Goalie Save Percentage' = 'oiSV%',
  'Hits' = 'HIT',
  'Blocks' = 'BLK'
 )

@@ -9,7 +9,7 @@ shinyUI(
                         titleWidth = 350
         ), #end dashboardHeader
         
-        dashboardSidebar(
+        sidebar = dashboardSidebar(
             sidebarUserPanel("Alex Tin BDS021", image = 'https://i.pinimg.com/originals/6c/ce/de/6ccede86e8a11d520f5e7a3386d46ff0.jpg'),
             sidebarMenu(
                 menuItem(
@@ -51,32 +51,32 @@ shinyUI(
             
             
             # Tab 2: Regular Season Stats
-            tabItem(
-                tabName = 'regular',
-                fluidRow( h2('Regular Season Stats')),
+            tabItem(tabName = 'regular',
+                fluidRow(h2('Regular Season Stats')
+                
+                ),
                 fluidRow(
-                         tabPanel(title = 'Team Comparisons',
-                                  column(
-                                      6,
-                                      selectInput(
-                                          inputId = "seasonselect",
-                                          label = h4("Season"),
-                                          choices = unique(avgseasonstat$Season),
-                                          selected = '2018-19'
-                                      )
-                                  ),
-                                  column(
-                                      6,
-                                      selectInput(
-                                          inputId = "teamstat",
-                                          label = h4("Stat Category"),
-                                          choices = vars,
-                                          selected = 'CF%'
-                                      )
-                                  ))), 
+                    column(
+                        6,
+                        selectInput(
+                            inputId = "seasonselect",
+                            label = h4("Season"),
+                            choices = unique(histreg_byteam$Season),
+                            selected = '2018-19'
+                        )
+                    ),
+                    column(6,
+                           selectInput(
+                               inputId = "teamstat",
+                               label = h4("Stat Category"),
+                               choices = vars,
+                               selected = 'CF%'
+                           )
+                    )
+                ), #end fluidRow
                 fluidRow(             
-                    tabBox(
-                        tabPanel(plotlyOutput('season_graph'))
+                    
+                    box(plotOutput('season_graph')),
                         
                         # tabPanel(title = "Player Comparisons",
                         #          "Team selection"),
@@ -84,38 +84,43 @@ shinyUI(
                         
                         # # selectInput("Division", )
                         # tabPanel("Player Table", DT::dataTableOutput("regtable"))
-                    )
                 ) #end of fluidRow of dataTable
-                
                 ), #end tab2 tabItem
                     
-            
+
             # Tab 3: Playoff Stats
         tabItem(tabName = 'playoff',
-                fluidRow(
-                   
-                     
-                )
-                
+        #         fluidRow(
+        #            
+        #              
+        #         )
+
                 ), #end tab3 items
-            
+
             # Tab 4: Create your own team
-        tabItem(
-            tabName = 'create',
-            fluidRow(
-                'Coming soon!',
-                'Using different metrics on what you think is most important, construct your "dream team" and see if you can beat the champions!'
-                
-            )
-        ), 
-            
+        tabItem(tabName = 'create',
+        #     fluidRow(
+        #         'Coming soon!',
+        #         'Using different metrics on what you think is most important, construct your "dream team" and see if you can beat the champions!'
+        #         
+            ),
+
             # Tab 5: Glossary
         tabItem(tabName = 'glossary',
-                fluidRow('glossary'))
-    
+        #         fluidRow('glossary')
         
-            )
+        
+            ) #end TabItem
+        
+        
+        
+        
+            )#end TabItems
         ) #end dashboardBody
     
     ) #end dashboardPage
 )#end of shinyUI
+
+
+
+

@@ -86,13 +86,6 @@ avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(
 histreg_byteam = teamhistreg %>% group_by(., Tm)
 
 
-
-
-# Graph 3: Breakdown Per season, all teams
-reg_byseason = teamhistreg %>% filter(., Season == '2010-11')
-
-
-
 # Avg Team stat
 
 
@@ -117,7 +110,7 @@ ggplot(histreg_byseason, aes(x=Season, y=`CF%`)) + geom_boxplot(aes(color=MadePl
 teamhistreg %>% ggplot(., aes(x=Season, y=`HIT`)) + geom_violin(aes(fill=MadePlayoffs))
 
 #Graph 2: Stat metric  vs. entire league per season (compared with historical average(?))
-league_average <- avgstat_total %>% select(., `CF%`)
+league_average <- avgstat_total %>% select(., `oiSH%`)
 
 histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=Tm, y=`oiSH%`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + geom_text(aes(label=Tm),nudge_y = 0.5,size=2)
 
