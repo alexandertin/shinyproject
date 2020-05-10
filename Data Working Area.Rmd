@@ -19,7 +19,6 @@ library(ggplot2)
 library(dplyr)
 library(data.table)
 library(plotly)
-library(data.table)
 library(DT)
 library(tidyverse)
 library(corrplot)
@@ -33,10 +32,7 @@ Load all the necessary files (4 total)
 team2018reg <- read_csv(file='./data/NHLReg.csv',col_names = TRUE)
 
 #data for player stats in playoffs (basic) - convert to team stats
-team2018playoff <- read_csv(file='./data/NHLPlayoffs_Basic.csv',col_names=TRUE)
-
-#data for player stats in playoffs (advanced) - convert to team stats
-team2018playoffadv <- read_csv(file='./data/NHLPlayoffs_Advanced.csv',col_names=TRUE)
+team2018playoff <- read_csv(file='./data/Playoffs_201019.csv',col_names=TRUE)
 
 # Historical team data - from hockey-reference
 #https://www.hockey-reference.com/play-index/tpbp_finder.cgi
@@ -68,30 +64,13 @@ teamhistreg <- teamhistreg %>% mutate(., Division = ifelse(Tm %in% Atlantic,'Atl
 2010 - 2019 Team Stats (Tables)
 
 ```{r}
-# Plotting champions of each year
-champs_byseason <- teamhistreg[teamhistreg$`Eventual Champion` ==1,]
-
 #Convert factor of Eventual Champion
 levels(teamhistreg$`Eventual Champion`) = c('Eliminated', 'Champion', 'Runner-up')
 
 
-#By Season
-histreg_byseason = teamhistreg %>% group_by(., Season)
-
-#Average historical value
-avgstat_byseason = teamhistreg %>% group_by(., Season) %>% summarise_all(., mean)
-
-#Average of each stat (without 2012-13 season)
 avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(., mean)
 
-
-#By Team
-histreg_byteam = teamhistreg %>% group_by(., Tm)
-
-
-# Avg Team stat
-
-
+histreg_byteam = teamhistreg %>% group_by(., Division, Tm)
 
 ```
 
@@ -99,15 +78,6 @@ histreg_byteam = teamhistreg %>% group_by(., Tm)
 
 
 ```{r}
-
-#By Season
-
-ggplot(histreg_byseason, aes(x=Season, y=`CF%`)) + geom_boxplot(aes(color=MadePlayoffs))
-
-
-
-
-
 
 # Graph X: Breakdown Per season, all teams (violin plot)
 teamhistreg %>% ggplot(., aes(x=Season, y=`HIT`)) + geom_violin(aes(fill=MadePlayoffs))
@@ -128,7 +98,9 @@ histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=Tm, y=`PDO
 histreg_byteam %>% filter(., Season == '2010-11' & MadePlayoffs==TRUE) %>% ggplot(., aes(x=Tm, y=`oiSH%`)) + geom_point(aes(color=factor(`Eventual Champion`))) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + scale_color_discrete(name="Results", breaks=c('1','2','0'), labels=c('Champion','Runner-up','Eliminated'))
 
 #All playoff teams over the years
-histreg_byteam %>% filter(., MadePlayoffs==TRUE) %>% ggplot(., aes(x=Tm, y=`CF%`)) + geom_point(aes(color=factor(`Eventual Champion`))) + geom_hline(yintercept= as.integer(league_average)) + theme(axis.text.x = element_text(angle = 90)) + scale_color_discrete(name="Results", breaks=c('1','2','0'), labels=c('Champion','Runner-up','Eliminated'))
+league_average3 <- avgstat_total %>% select(., `CF%`)
+
+histreg_byteam %>% filter(., MadePlayoffs==TRUE) %>% ggplot(., aes(x=Tm, y=`CF%`)) + geom_point(aes(color=factor(`Eventual Champion`))) + geom_hline(yintercept= as.integer(league_average3)) + theme(axis.text.x = element_text(angle = 90)) + scale_color_discrete(name="Results", breaks=c('1','2','0'), labels=c('Champion','Runner-up','Eliminated'))
 
 
 
@@ -226,38 +198,63 @@ Playoff stats
 ###Manipulate colnames of stats
 
 #add identifier as playoff stats ('playoff_'), and convert to lowercase
-colnames(teamplayoff) <- paste0('playoff_',tolower(colnames(teamplayoff)))
+colnames(team2018playoff) <- paste0('playoff_',tolower(colnames(team2018playoff)))
 
 #add identifier as playoff stats ('playoff_'), and convert to lowercase
-colnames(teamplayoffadv) <- paste0('playoff_',tolower(colnames(teamplayoffadv)))
+# colnames(team2018playoffadv) <- paste0('playoff_',tolower(colnames(team2018playoffadv)))
 
 #remove duplicate column except for identifier to merge with teamplay
-teamplayoffadvfin <- subset(teamplayoffadv,select=-c(playoff_rk,playoff_x3, playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
+# team2018playoff_final <- subset(team2018playoffadv,select=-c(playoff_rk,playoff_x3, playoff_player,playoff_age,playoff_tm,playoff_pos,playoff_gp))
 
 #merge teamplayoffs
-playofftotal <- bind_cols(teamplayoff, teamplayoffadvfin)
+# playoff2018total <- bind_cols(team2018playoff, team2018playoff_final)
 
 #add divisions
-playofftotal <- playofftotal %>% mutate(., division = ifelse(playoff_tm %in% Atlantic,'Atlantic', ifelse(playoff_tm %in% Metro, 'Metropolitan', ifelse(playoff_tm %in% Central, 'Central','Pacific'))))
+team2018playoff <- team2018playoff %>% mutate(., division = ifelse(playoff_tm %in% Atlantic,'Atlantic', ifelse(playoff_tm %in% Metro, 'Metropolitan', ifelse(playoff_tm %in% Central, 'Central','Pacific'))))
 
 
+#Calculate Team Stats normalised for 82 games (CF, CA, and FF) (Player level)
+playoff2018total2 <- team2018playoff %>% mutate(.,'goalnorm' = playoff_g/playoff_gp, 'shotsnorm' = playoff_cf/playoff_gp, 'CFnorm'=playoff_cf/playoff_gp, 'CAnorm'=playoff_ca/playoff_gp, 'FFnorm'=playoff_ff/playoff_gp, 'hitnorm' = playoff_hit/playoff_gp, 'blknorm' = playoff_blk/playoff_gp)
+
+#Group_by playoff year, division, season
+playoff2018total3 <- playoff2018total2 %>% group_by(., playoff_year, division, playoff_tm) %>% mutate(., tot_gp = max(playoff_gp))
+
+ 
+playoff2018total3 <- playoff2018total3 %>% summarise(., avg_age = mean(playoff_age), tot_goal = sum(goalnorm), tot_shots = sum(shotsnorm, na.rm = T), tot_blocks = sum(blknorm), tot_hits = sum(hitnorm), totnorm_cf = sum(CFnorm), totnorm_ca = sum(CAnorm), totnorm_ff = sum(FFnorm), shot_pct = mean(`playoff_oish%`, na.rm=T), tot_dzs = mean(`playoff_dzs%`, na.rm = T),tot_ozs = mean(`playoff_ozs%`, na.rm = T))
+
+championsubtable = histreg_byteam %>% select(., Tm, Season, `Eventual Champion`)
 
 
-# Team statistics
-# teamstat <- regtbl %>% group_by(., Division, Team) %>% summarise(., agg_goals = sum(G), agg_clean = sum(CPP))
-# 
-# teamstat
-# teamstat %>% ggplot(aes(x=agg_goals,y=agg_clean,label=Team)) + geom_point(aes(color=Division))
-# 
-# 
-# meangoals = mean(regtbl$agggoals)
-# 
-# teamstat %>% mutate(., difftoavg= lapply(agggoals, function(x) x-meangoals))
-# 
+#add status of champions
+playoff_summ <- dplyr::left_join(playoff2018total3,championsubtable, by=c('playoff_year'='Season','playoff_tm'='Tm'))
 
+
+# "Normalised" stats
+playoff_summ <- playoff_summ %>% group_by(., playoff_year, division, playoff_tm, `Eventual Champion`) %>% select(.,playoff_year, division, playoff_tm, `Eventual Champion`, avg_age,tot_goal, tot_shots, tot_blocks,tot_hits,totnorm_cf,totnorm_ca,totnorm_ff,shot_pct,tot_dzs,tot_ozs)
+
+
+# Playoff average
+playoff_avg <- playoff_summ %>% ungroup() %>% summarise_all(., mean, na.rm=T)
 
 #Provided by <a href="https://www.sports-reference.com/sharing.html?utm_source=direct&utm_medium=Share&utm_campaign=ShareTool">Hockey-Reference.com</a>: <a href="https://www.hockey-reference.com/leagues/NHL_2018.html?sr&utm_source=direct&utm_medium=Share&utm_campaign=ShareTool#stats_adv">View Original Table</a><br>Generated 5/8/2020.
 ```
+
+Playoff Graphs
+
+```{r}
+
+
+
+
+
+
+```
+
+
+
+
+
+
 
 
 Glossary

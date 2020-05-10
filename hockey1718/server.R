@@ -2,10 +2,6 @@
 
 ########### 2010 - 2019 Team Stats (Tables) ###########################
 
-# Plotting champions of each year
-champs_byseason <- teamhistreg[teamhistreg$`Eventual Champion` ==1,]
-
-
 #By Season
 histreg_byseason = teamhistreg %>% group_by(., Season)
 
@@ -24,7 +20,63 @@ absolutevar = c('CF','CA','FF','HIT','BLK')
 percentvar = c('oiSH%','oiSV%')
 percentvar50 = c('CF%','FO%')
 
-# Shiny function
+
+################# 2010-2019 Playoff Stats ###########################
+
+
+#add identifier as playoff stats ('playoff_'), and convert to lowercase
+colnames(team2018playoff) <- paste0('playoff_',tolower(colnames(team2018playoff)))
+
+
+#add divisions
+team2018playoff <- team2018playoff %>% 
+    mutate(., division = ifelse(playoff_tm %in% Atlantic,'Atlantic', 
+                                ifelse(playoff_tm %in% Metro, 'Metropolitan', 
+                                       ifelse(playoff_tm %in% Central, 'Central','Pacific'))))
+
+
+#Calculate Team Stats normalised per game (CF, CA, and FF) (Player level)
+playoff2018total2 <- team2018playoff %>% 
+    mutate(.,'goalnorm' = playoff_g/playoff_gp, 
+           'shotsnorm' = playoff_cf/playoff_gp, 
+           'CFnorm'=playoff_cf/playoff_gp, 
+           'CAnorm'=playoff_ca/playoff_gp, 
+           'FFnorm'=playoff_ff/playoff_gp, 
+           'hitnorm' = playoff_hit/playoff_gp, 
+           'blknorm' = playoff_blk/playoff_gp)
+
+#Group_by playoff year, division, season
+playoff2018total3 <- playoff2018total2 %>% 
+    group_by(., playoff_year, division, playoff_tm) %>% 
+    mutate(., tot_gp = max(playoff_gp))
+
+#Create Teeam level stats
+playoff2018total3 <- playoff2018total3 %>% 
+    summarise(., avg_age = mean(playoff_age), 
+              tot_goal = sum(goalnorm), 
+              tot_shots = sum(shotsnorm, na.rm = T), 
+              tot_blocks = sum(blknorm), 
+              tot_hits = sum(hitnorm), 
+              totnorm_cf = sum(CFnorm), 
+              totnorm_ca = sum(CAnorm), 
+              totnorm_ff = sum(FFnorm), 
+              shot_pct = mean(`playoff_oish%`, na.rm=T), 
+              tot_dzs = mean(`playoff_dzs%`, na.rm = T),
+              tot_ozs = mean(`playoff_ozs%`, na.rm = T))
+
+# Add results of playoffs
+championsubtable = histreg_byteam %>% select(., Tm, Season, `Eventual Champion`)
+
+playoff_summ <- dplyr::left_join(playoff2018total3,championsubtable, 
+                                 by=c('playoff_year'='Season','playoff_tm'='Tm'))
+
+
+# Playoff average
+playoff_avg <- playoff_summ %>% ungroup() %>% summarise_all(., mean, na.rm=T)
+
+
+#################################### Shiny function
+
 shinyServer(function(input, output) {
     
     
@@ -44,6 +96,24 @@ shinyServer(function(input, output) {
             select(., SelectedX =input$teamstat1, SelectedY = input$teamstat2, Season, Tm, MadePlayoffs, Division)
         
     })
+    
+    playoff_avg <- reactive({
+        playoff_avg %>% select(., input$teamstat3)
+        
+    })
+    
+    
+    playoff_input <- reactive({
+        playoff_summ %>% filter(., playoff_year == input$seasonselect2) %>% 
+            select(., select=input$teamstat3, playoff_year, playoff_tm, `Eventual Champion`, division)
+        
+    })
+    
+    playoffstat_input <- reactive({
+        playoff_summ %>% filter(., playoff_year == input$seasonselect2) %>% 
+            select(., SelectedX = input$teamstat4, SelectedY = input$teamstat5, playoff_year, playoff_tm, `Eventual Champion`, division)
+    })
+    
     
 #Tab 2: Regular Season Stats
      

@@ -148,9 +148,65 @@ shinyUI(
                 # Tab 3: Playoff Stats
                 tabItem(tabName = 'playoffs',
                         fluidRow(
-                            box("Goodbye"
-                            )
-                        )
+                                h2('Playoff Stats')
+                        ),
+                        fluidRow(
+                                column(
+                                    width = 6,
+                                    selectInput(
+                                        inputId = "seasonselect2",
+                                        label = h4("Season"),
+                                        choices = unique(),
+                                        selected = '2018-19'
+                                        )
+                                )
+                        ),
+                        fluidRow(
+                                column(
+                                    width = 5,
+                                    selectInput(
+                                        inputId = "teamstat3",
+                                        label = h4("Stat Category"),
+                                        choices = vars2,
+                                        selected = 'CF%'
+                                    )
+                                ),
+                                column(
+                                    width = 2,
+                                    selectInput(
+                                        inputId = "teamstat4",
+                                        label = h4("Stat Category X"),
+                                        choices = vars2,
+                                        selected = 'FO%'
+                                    )
+                                ),
+                                column(
+                                    width = 2,
+                                    selectInput(
+                                        inputId = "teamstat5",
+                                        label = h4("Stat Category Y"),
+                                        choices = vars2,
+                                        selected = 'CF%'
+                                    )
+                                )
+                        ), 
+                        fluidRow(
+                                box(
+                                    width = 5,
+                                    tabPanel(
+                                        title = 'Season Comparison', 
+                                        plotOutput('season_graph')
+                                        )
+                                    ),
+                                box(
+                                    width = 5,
+                                    tabPanel(
+                                        title = 'Pairwise Stat Comparison',
+                                        plotlyOutput('stat_graph')
+                                        )
+                                    )
+                        ), # end fluidRow
+
                 ) #end tab3 tabItem
 
                 # # Tab 4: Create your own team
