@@ -20,8 +20,9 @@ avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(
 histreg_byteam = teamhistreg %>% group_by(., Tm)
 
 
-
-
+absolutevar = c('CF','CA','FF','HIT','BLK')
+percentvar = c('oiSH%','oiSV%')
+percentvar50 = c('CF%','FO%')
 
 # Shiny function
 shinyServer(function(input, output) {
@@ -35,23 +36,52 @@ shinyServer(function(input, output) {
     leaguewide_input <-reactive({ 
         histreg_byteam %>% filter(., Season == input$seasonselect) %>% 
             select(., selected =input$teamstat, Season, Tm, MadePlayoffs, Division)
-        })
+    })
+    
+    
+    stat_input <- reactive({
+        histreg_byteam %>% filter(., Season == input$seasonselect) %>% 
+            select(., SelectedX =input$teamstat1, SelectedY = input$teamstat2, Season, Tm, MadePlayoffs, Division)
+        
+    })
     
 #Tab 2: Regular Season Stats
-     output$season_graph <- renderPlot({
-         
-         #Graph 2: Stat metric vs. entire league per season (compared with historical average)
-            
-            leaguewide_input() %>% ggplot(., aes(x=Tm, y=selected)) + 
-             geom_point(aes(color=MadePlayoffs, shape=Division)) + 
-             xlab('Team') + ylab(input$teamstat) + 
-             geom_hline(yintercept= as.integer(historical_avg())) +
-             theme(axis.text.x = element_text(angle = 90)) +
-             geom_text(aes(label=Tm),nudge_y = 0.5,size=2)
+     
+    
+    output$season_graph <- renderPlot({
 
-     })
+        #Graph 2: Stat metric vs. entire league per season (compared with historical average)
+        # if (input$teamstat %in% absolutevar) {
+            leaguewide_input() %>% ggplot(., aes(x = Tm, y = selected)) +
+                geom_point(size=5, aes(color = MadePlayoffs, shape = Division)) +
+                xlab('Team') + ylab(input$teamstat) +
+                geom_hline(yintercept = as.integer(historical_avg())) +
+                theme(axis.text.x = element_text(angle = 90)) +
+                geom_text(aes(label = selected), nudge_y = 0.5, size = 4)
+        # }
         
+        # if (input$teamstat %in% percentvar){
+        #     leaguewide_input() %>% 
+        #         ggplot(., aes(x=`FO%`, y=`CF%`)) + 
+        #         geom_point(aes(color=MadePlayoffs, shape=Division)) + 
+        #         theme(axis.text.x = element_text(angle = 90)) + 
+        #         geom_vline(xintercept=fifty) + geom_hline(yintercept=fifty) + 
+        #         geom_text(aes(label=Tm),nudge_x = 0.4,size=2) 
+        #     
+        #     
+        #     
+        #     
+        # }
+            
+            
+    })
         
+    output$stat_graph <- renderPlotly({
+        plot_ly(stat_input(), x=~SelectedX, y = ~SelectedY,
+                text = ~paste('Team:',Tm),
+                color = ~MadePlayoffs)
+        
+    })
         
         
         
