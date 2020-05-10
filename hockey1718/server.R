@@ -57,7 +57,8 @@ shinyServer(function(input, output) {
                 xlab('Team') + ylab(input$teamstat) +
                 geom_hline(yintercept = as.integer(historical_avg())) +
                 theme(axis.text.x = element_text(angle = 90)) +
-                geom_text(aes(label = selected), nudge_y = 0.5, size = 4)
+                geom_text(aes(label = selected), nudge_y = 0.5, size = 4) + 
+                ggtitle('Stats v. Historical Average') + theme(plot.title= element_text(size=20, hjust=0.5))
         # }
         
         # if (input$teamstat %in% percentvar){
@@ -79,7 +80,8 @@ shinyServer(function(input, output) {
     output$stat_graph <- renderPlotly({
         plot_ly(stat_input(), x=~SelectedX, y = ~SelectedY,
                 text = ~paste('Team:',Tm),
-                color = ~MadePlayoffs)
+                symbol = ~MadePlayoffs, symbols = c('x','o')) %>% 
+                layout(title='Stats Comparison', legend=list(title=list(text='<b>Made Playoffs')))
         
     })
         

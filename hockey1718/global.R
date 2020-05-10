@@ -88,6 +88,8 @@ vars <- c(
  'Corsi For %' = 'CF%',
  'Shots fired towards net (FF)' = 'FF',
  'Goals Percentage' = 'oiSH%',
+ 'Offensive Zone Start %' = 'oZS%',
+ 'Defensive Zone Start %' = 'dZS%',
  'Face-off Wins (FO%)' = 'FO%',
  'Goalie Save Percentage' = 'oiSV%',
  'Hits' = 'HIT',

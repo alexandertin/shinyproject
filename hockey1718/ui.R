@@ -4,8 +4,7 @@
 # Shiny Layout
 shinyUI(
     dashboardPagePlus(
-        header = dashboardHeaderPlus(
-            enable_rightsidebar = TRUE,
+        header = dashboardHeader(
             title = 'NHL 2017-18 Season Analysis',
             titleWidth = 350
         ),
@@ -47,7 +46,8 @@ shinyUI(
                 
                 #Tab 1: Intro
                 tabItem(tabName = 'intro',
-                        fluidRow('intro')),
+                        fluidRow('intro')
+                ),
                 #end tab1 tabItem
             
             
@@ -64,64 +64,95 @@ shinyUI(
                                     label = h4("Season"),
                                     choices = unique(histreg_byteam$Season),
                                     selected = '2018-19'
-                                )
-                            ),
+                                    )
+                            )
+                        ),
+                        fluidRow(
                             column(
-                                width = 6,
+                                width = 5,
                                 selectInput(
                                     inputId = "teamstat",
                                     label = h4("Stat Category"),
                                     choices = vars,
                                     selected = 'CF%'
-                                )
+                                    )
+                            ),
+                            column(
+                                width = 2,
+                                selectInput(
+                                    inputId = "teamstat1",
+                                    label = h4("Stat Category X"),
+                                    choices = vars,
+                                    selected = 'FO%'
+                                    )
+                            ),
+                            column(
+                                width = 2,
+                                selectInput(
+                                    inputId = "teamstat2",
+                                    label = h4("Stat Category Y"),
+                                    choices = vars,
+                                    selected = 'CF%'
+                                    )
                             )
                         ), 
                         fluidRow(
-                            tabBox(
-                                width = 12,
+                            box(
+                                width = 5,
                                 tabPanel(
                                     title = 'Season Comparison', 
                                     plotOutput('season_graph')
                                 )
+                            ),
+                            box(
+                                width = 5,
+                                tabPanel(
+                                    title = 'Pairwise Stat Comparison',
+                                    plotlyOutput('stat_graph')
+                                )
                             )
                         ), # end fluidRow
                         fluidRow(
-                            column(
-                                width = 6,
-                                selectInput(
-                                    inputId = "teamstat1",
-                                    label = h4("Stat Category"),
-                                    choices = vars,
-                                    selected = 'FO%'
-                                )
-                            ),
-                            column(
-                                width = 6,
-                                selectInput(
-                                    inputId = "teamstat2",
-                                    label = h4("Stat Category"),
-                                    choices = vars,
-                                    selected = 'CF%'
-                                )
-                            ),
-                        ),    
+                            boxPlus(
+                                title = 'Glossary',
+                                closable = FALSE,
+                                collapsible = TRUE,
+                                enable_dropdown = FALSE,
+                                p("1) Shot Volume:"),
+                                p("Total shots taken (CF): Metric known as 'Corsi For. It measures all shots taken against the opposition, including goals, misses or blocked shots"),
+                                p("Total shots faced (CA): Metric known as 'Corsi Against'. It measures all shots taken by the opposition, including goals, misses or blocked shots"),
+                                p(" "),
+                                p("2) Shot accuracy/quality:"),
+                                p("Shots fired towards net (FF): Metric known as 'Fenwick For'. Similar to Corsi For, but only measures shots that weren't blocked."),
+                                p("Goals percentage (ioSH): Measures goal percentage - this is taken as goals/shots taken"),
+                                p("  "),
+                                p("3) Possession:"),
+                                p("Offensive Zone Start Percentage (oZS%): Percentage started in the opponent's half"),
+                                p("Defensive Zone Start Percentage (dZS%): Percentage started in their own half"),
+                                p(" "),
+                                p("4) Face-off Wins:"),
+                                p("Face-off Wins (FO%): Wins on the face-off spots/circles."),
+                                p(" "),
+                                p("5) Save%:"),
+                                p("Goalie Saves (oiSV%): Measures the goalie save percentage. Expressed as over 1.000"),
+                                p("6) Physicality/Grit"),
+                                p("Hits: Hits credited on the opposition"),
+                                p("Blocks: Blocked shots - willingness of players to put their body on the line")
+                                
+                            )
+                        ) # end of fluidRow
+                        
+                    ),    #end tab2 tabItem
+                
+                
+                # Tab 3: Playoff Stats
+                tabItem(tabName = 'playoffs',
                         fluidRow(
-                            tabBox(
-                                width = 12,
-                                tabPanel(
-                                    title = 'Stat Comparison',
-                                    plotlyOutput('stat_graph')
-                                )
-                            ) #end tabBox
-                        ) #end fluidRow
-                    )    #end tab2 tabItem
-                
-                
-                # # Tab 3: Playoff Stats
-                # tabItem(tabName = 'playoff',
-                #         fluidRow()),
-                # #end tab3 items
-                # 
+                            box("Goodbye"
+                            )
+                        )
+                ) #end tab3 tabItem
+
                 # # Tab 4: Create your own team
                 # tabItem(
                 #     tabName = 'create',

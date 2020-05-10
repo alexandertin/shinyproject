@@ -71,6 +71,9 @@ teamhistreg <- teamhistreg %>% mutate(., Division = ifelse(Tm %in% Atlantic,'Atl
 # Plotting champions of each year
 champs_byseason <- teamhistreg[teamhistreg$`Eventual Champion` ==1,]
 
+#Convert factor of Eventual Champion
+levels(teamhistreg$`Eventual Champion`) = c('Eliminated', 'Champion', 'Runner-up')
+
 
 #By Season
 histreg_byseason = teamhistreg %>% group_by(., Season)
@@ -155,6 +158,21 @@ histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`oiSV%`, y
 # Takeaway - increased shot percentage 
 
 ```
+
+
+
+```{r}
+
+
+plot_ly(histreg_byteam, x=~CF, y = ~CA,
+                color = ~MadePlayoffs)
+
+
+
+```
+
+
+
 
 
 
