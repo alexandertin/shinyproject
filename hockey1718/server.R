@@ -26,8 +26,15 @@ histreg_byteam = teamhistreg %>% group_by(., Tm)
 # Shiny function
 shinyServer(function(input, output) {
     
-    input_df_test <-reactive({ 
-        histreg_byteam %>% filter(., Season == input$seasonselect) %>% select(., selected =input$teamstat, Season, Tm, MadePlayoffs, Division)
+    
+    historical_avg <- reactive({
+        league_average <- avgstat_total %>% select(., input$teamstat)
+        
+    })
+    
+    leaguewide_input <-reactive({ 
+        histreg_byteam %>% filter(., Season == input$seasonselect) %>% 
+            select(., selected =input$teamstat, Season, Tm, MadePlayoffs, Division)
         })
     
 #Tab 2: Regular Season Stats
@@ -35,12 +42,12 @@ shinyServer(function(input, output) {
          
          #Graph 2: Stat metric vs. entire league per season (compared with historical average)
             
-            input_df_test() %>% ggplot(., aes(x=Tm, y=selected)) + 
-             geom_point(aes(color=MadePlayoffs, shape=Division)) + ylab(input$teamstat)
-         
-         # + geom_hline(yintercept= as.integer(league_average)) +
-         #     theme(axis.text.x = element_text(angle = 90)) +
-         #     geom_text(aes(label=Tm),nudge_y = 0.5,size=2)
+            leaguewide_input() %>% ggplot(., aes(x=Tm, y=selected)) + 
+             geom_point(aes(color=MadePlayoffs, shape=Division)) + 
+             xlab('Team') + ylab(input$teamstat) + 
+             geom_hline(yintercept= as.integer(historical_avg())) +
+             theme(axis.text.x = element_text(angle = 90)) +
+             geom_text(aes(label=Tm),nudge_y = 0.5,size=2)
 
      })
         
