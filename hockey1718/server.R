@@ -2,8 +2,8 @@
 
 ########### 2010 - 2019 Team Stats (Tables) ###########################
 
-#By Season
-histreg_byseason = teamhistreg %>% group_by(., Season)
+
+
 
 #Average historical value
 avgstat_byseason = teamhistreg %>% group_by(., Season) %>% summarise_all(., mean)
@@ -14,11 +14,6 @@ avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(
 
 #By Team
 histreg_byteam = teamhistreg %>% group_by(., Tm)
-
-
-absolutevar = c('CF','CA','FF','HIT','BLK')
-percentvar = c('oiSH%','oiSV%')
-percentvar50 = c('CF%','FO%')
 
 
 ################# 2010-2019 Playoff Stats ###########################
@@ -80,8 +75,10 @@ playoff_avg <- playoff_summ %>% ungroup() %>% summarise_all(., mean, na.rm=T)
 shinyServer(function(input, output) {
     
     
+    ############## Regular Season reactives    
+    
     historical_avg <- reactive({
-        league_average <- avgstat_total %>% select(., input$teamstat)
+        avgstat_total %>% select(., input$teamstat)
         
     })
     
@@ -96,32 +93,36 @@ shinyServer(function(input, output) {
             select(., SelectedX =input$teamstat1, SelectedY = input$teamstat2, Season, Tm, MadePlayoffs, Division)
         
     })
+  
     
-    playoff_avg <- reactive({
+    ################ Playoff reactives
+      
+    playoffs_avg <- reactive({
         playoff_avg %>% select(., input$teamstat3)
-        
+
     })
-    
-    
+
+
     playoff_input <- reactive({
-        playoff_summ %>% filter(., playoff_year == input$seasonselect2) %>% 
-            select(., select=input$teamstat3, playoff_year, playoff_tm, `Eventual Champion`, division)
-        
+        playoff_summ %>% filter(., playoff_year == input$seasonselect2) %>%
+            select(., playoffselect=input$teamstat3, playoff_year, playoff_tm, `Eventual Champion`, division)
+
     })
-    
+
     playoffstat_input <- reactive({
-        playoff_summ %>% filter(., playoff_year == input$seasonselect2) %>% 
-            select(., SelectedX = input$teamstat4, SelectedY = input$teamstat5, playoff_year, playoff_tm, `Eventual Champion`, division)
+        playoff_summ %>% select(., 
+                                playoffselectedX = input$teamstat4, 
+                                playoffselectedY = input$teamstat5, 
+                                playoff_year, playoff_tm, `Eventual Champion`, division)
     })
     
     
-#Tab 2: Regular Season Stats
+###############Tab 2: Regular Season Stats
      
     
     output$season_graph <- renderPlot({
 
         #Graph 2: Stat metric vs. entire league per season (compared with historical average)
-        # if (input$teamstat %in% absolutevar) {
             leaguewide_input() %>% ggplot(., aes(x = Tm, y = selected)) +
                 geom_point(size=5, aes(color = MadePlayoffs, shape = Division)) +
                 xlab('Team') + ylab(input$teamstat) +
@@ -129,41 +130,34 @@ shinyServer(function(input, output) {
                 theme(axis.text.x = element_text(angle = 90)) +
                 geom_text(aes(label = selected), nudge_y = 0.5, size = 4) + 
                 ggtitle('Stats v. Historical Average') + theme(plot.title= element_text(size=20, hjust=0.5))
-        # }
-        
-        # if (input$teamstat %in% percentvar){
-        #     leaguewide_input() %>% 
-        #         ggplot(., aes(x=`FO%`, y=`CF%`)) + 
-        #         geom_point(aes(color=MadePlayoffs, shape=Division)) + 
-        #         theme(axis.text.x = element_text(angle = 90)) + 
-        #         geom_vline(xintercept=fifty) + geom_hline(yintercept=fifty) + 
-        #         geom_text(aes(label=Tm),nudge_x = 0.4,size=2) 
-        #     
-        #     
-        #     
-        #     
-        # }
-            
             
     })
         
     output$stat_graph <- renderPlotly({
-        plot_ly(stat_input(), x=~SelectedX, y = ~SelectedY,
+            plot_ly(stat_input(), x=~SelectedX, y = ~SelectedY,
                 text = ~paste('Team:',Tm),
                 symbol = ~MadePlayoffs, symbols = c('x','o')) %>% 
                 layout(title='Stats Comparison', legend=list(title=list(text='<b>Made Playoffs')))
-        
+            
     })
         
         
         
-# Tab 3: Playoff Stats
+####################### Tab 3: Playoff Stats
+    output$playoff_graph <- renderPlot({
+            playoff_input() %>% ggplot(., aes(x = playoff_tm, y = playoffselect)) +
+                geom_point(size=5, aes(color = `Eventual Champion`, shape = division)) +
+                xlab('Team') + ylab(input$teamstat3) +
+                geom_hline(yintercept = as.integer(playoffs_avg())) +
+                theme(axis.text.x = element_text(angle = 90)) +
+                ggtitle('Stats v. Historical Average') + theme(plot.title= element_text(size=20, hjust=0.5))
+    })
         
-        
-        
-        
-        
-# Tab 4: Create your own team
+    output$pstat_graph <- renderPlotly({
+            playoffstat_input() %>% ggplot(., aes(x=playoffselectedX, y=playoffselectedY, color=factor(`Eventual Champion`))) + 
+            geom_point(shape=5) + facet_grid(. ~ `Eventual Champion`)
+
+    })    
         
         
         

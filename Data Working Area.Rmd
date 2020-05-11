@@ -37,7 +37,7 @@ team2018playoff <- read_csv(file='./data/Playoffs_201019.csv',col_names=TRUE)
 # Historical team data - from hockey-reference
 #https://www.hockey-reference.com/play-index/tpbp_finder.cgi
 teamhistreg <- read_csv(file='./data/Team2010_2019.csv',col_names=TRUE)
-teamhistreg$`Eventual Champion` <- as.factor(teamhistreg$`Eventual Champion`)
+teamhistreg$`Eventual Champion` <- factor(teamhistreg$`Eventual Champion`,levels = c(1,2,0))
 
 str(teamhistreg)
 ```
@@ -65,10 +65,10 @@ teamhistreg <- teamhistreg %>% mutate(., Division = ifelse(Tm %in% Atlantic,'Atl
 
 ```{r}
 #Convert factor of Eventual Champion
-levels(teamhistreg$`Eventual Champion`) = c('Eliminated', 'Champion', 'Runner-up')
+levels(teamhistreg$`Eventual Champion`) = c('Champion', 'Runner-up','Eliminated')
 
 
-avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(., mean)
+avgstat_total = teamhistreg %>% filter(., !Season=='2012-13') %>% summarise_all(., mean, na.rm=T)
 
 histreg_byteam = teamhistreg %>% group_by(., Division, Tm)
 
@@ -111,6 +111,11 @@ histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`dZS%`, y=
 
 #Graph 5: The importance of faceoffs (apparently not really) - only change season variable
 histreg_byteam %>% filter(., Season == '2017-18') %>% ggplot(., aes(x=`FO%`, y=`CF%`)) + geom_point(aes(color=MadePlayoffs, shape=Division)) + theme(axis.text.x = element_text(angle = 90)) + geom_vline(xintercept=fifty) + geom_hline(yintercept=fifty) + geom_text(aes(label=Tm),nudge_x = 0.4,size=2) 
+a
+
+
+png('a.png')
+
 # +
 #     annotate('text', x=53, y = 55,label='High wins, high output') +
 #     annotate('text', x=53, y = 44,label='High wins, low output') +
@@ -143,52 +148,6 @@ plot_ly(histreg_byteam, x=~CF, y = ~CA,
 
 ```
 
-
-
-
-
-
-Regular Season Tab
-
-Regular Season Player Table 
-```{r}
-
-# selecting the stats to compare
-playertbl = playerreg %>% select(
-    .,
-    'DftYr',
-    'Age',
-    'Seasons',
-    'H-Ref Name',
-    'Team',
-    'GP',
-    'G',
-    'A',
-    'CPP',
-    'CriG',
-    'CruG',
-    'CruA1',
-    'CruA2',
-    'MGL'
-)
-
-
-#Adding Divisions to player stats
-playertbl <- playertbl %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
-
-```
-
-
-Regular Season Team Comparison table
-```{r}
-#Player statistic comparison
-
-#adding Divisions to team 
-teamregtbl <- teamreg %>% mutate(., Division = ifelse(Team %in% Atlantic,'Atlantic', ifelse(Team %in% Metro, 'Metropolitan', ifelse(Team %in% Central, 'Central','Pacific'))))
-
-
-
-```
 
 
 Playoff Tab
@@ -242,9 +201,18 @@ playoff_avg <- playoff_summ %>% ungroup() %>% summarise_all(., mean, na.rm=T)
 Playoff Graphs
 
 ```{r}
+historical_avg = playoff_avg %>% select(., 'avg_age')
+
+playoff_summ %>% filter(., playoff_year == '2017-18') %>% ggplot(., aes(x = playoff_tm, y = avg_age)) +
+                geom_point(size=5, aes(color = `Eventual Champion`, shape = division)) +
+                xlab('Team') + ylab('hi') +
+                geom_hline(yintercept = as.integer(historical_avg)) +
+                theme(axis.text.x = element_text(angle = 90)) +
+                ggtitle('Stats v. Historical Average') + theme(plot.title= element_text(size=20, hjust=0.5))
 
 
 
+playoff_summ %>% ggplot(., aes(avg_age, tot_shots,color = factor(`Eventual Champion`))) + geom_point() + facet_grid(vars(`Eventual Champion`))
 
 
 
